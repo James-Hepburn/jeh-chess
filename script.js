@@ -83,7 +83,7 @@ function is_threefold_repetition () {
   return position_history [state] >= 3;
 }
 
-function move_piece (old_row, old_col, row, col) {
+async function move_piece (old_row, old_col, row, col) {
   var piece = board [old_row][old_col];
   var captured_piece = board [row][col];
 
@@ -128,7 +128,7 @@ function move_piece (old_row, old_col, row, col) {
 
   save_board_state ();
 
-  setTimeout (() => {
+  setTimeout (async () => {
     if (is_in_checkmate ()) {
       alert ("Checkmate! " + (white_turn ? "Black" : "White") + " wins!");
       return;
@@ -610,9 +610,11 @@ async function fetchGameState() {
     }
 }
 
-setInterval(fetchGameState, 2000);
-(async function initializeGame() {
-    generate_board(); 
-    await fetchGameState(); 
-})();
+async function initializeGame() {
+    generate_board();
+    await fetchGameState();
+}
+
+initializeGame();
+
 
