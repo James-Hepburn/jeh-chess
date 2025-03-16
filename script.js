@@ -489,16 +489,21 @@ function make_draggable(piece, row, col) {
     if (!pieceType || pieceType[0] !== playerColor) return;
 
     piece.draggable = true;
-
+    
     piece.addEventListener("dragstart", (event) => {
-        event.stopPropagation(); 
-        event.preventDefault();  
+        event.stopPropagation();
+        event.preventDefault(); // BLOCKS DEFAULT IMAGE DRAGGING
 
         let dragData = JSON.stringify({ row, col });
-        console.log("Drag started with data:", dragData);
+        console.log("✅ Drag started with data:", dragData);
 
+        // FORCE JSON FORMAT
         event.dataTransfer.setData("application/json", dragData);
-        event.dataTransfer.setData("text/plain", dragData); 
+
+        // REMOVE IMAGE URL DATA IF IT EXISTS
+        event.dataTransfer.clearData("text/uri-list");
+        event.dataTransfer.clearData("text/plain");
+
         event.dataTransfer.effectAllowed = "move";
     });
 
@@ -511,7 +516,6 @@ function make_droppable(square, row, col) {
     if (!gameStarted) return;
 
     square.addEventListener("dragover", (event) => {
-        console.log("Dragging over square:", row, col);
         event.preventDefault();
     });
 
@@ -523,12 +527,12 @@ function make_droppable(square, row, col) {
         console.log("🔍 Raw drop data:", dataString);
 
         try {
-            if (!dataString || dataString.startsWith("http")) {  
-                throw new Error("Invalid drop data - Received an image URL instead of JSON.");
+            if (!dataString || dataString.trim() === "" || dataString.startsWith("http")) {  
+                throw new Error("Invalid drop data - Received an empty string or image URL instead of JSON.");
             }
 
             let data = JSON.parse(dataString);
-            console.log("Drop received:", data);
+            console.log("✅ Drop received:", data);
 
             let old_row = data.row;
             let old_col = data.col;
@@ -557,7 +561,7 @@ function make_droppable(square, row, col) {
             }
 
         } catch (error) {
-            console.error("Invalid data format:", dataString, error.message);
+            console.error("❌ Invalid data format:", dataString, error.message);
             generate_board();
         }
     });
