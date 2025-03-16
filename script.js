@@ -491,20 +491,25 @@ function make_draggable(piece, row, col) {
     piece.draggable = true;
     
     piece.addEventListener("dragstart", (event) => {
+        event.preventDefault();  // Prevent default image dragging behavior
         event.stopPropagation();
-        event.preventDefault(); // BLOCKS DEFAULT IMAGE DRAGGING
 
         let dragData = JSON.stringify({ row, col });
         console.log("✅ Drag started with data:", dragData);
 
-        // FORCE JSON FORMAT
         event.dataTransfer.setData("application/json", dragData);
+        event.dataTransfer.clearData("text/uri-list");  
+        event.dataTransfer.clearData("text/plain"); 
 
-        // REMOVE IMAGE URL DATA IF IT EXISTS
-        event.dataTransfer.clearData("text/uri-list");
-        event.dataTransfer.clearData("text/plain");
+        // FORCE JSON ONLY
+        setTimeout(() => {
+            console.log("🚀 DataTransfer types after setting:", event.dataTransfer.types);
+        }, 0);
 
         event.dataTransfer.effectAllowed = "move";
+
+        // BLOCK IMAGE DRAGGING
+        event.dataTransfer.setDragImage(new Image(), 0, 0);
     });
 
     piece.addEventListener("dragend", () => {
@@ -523,12 +528,15 @@ function make_droppable(square, row, col) {
         event.preventDefault();
         if (!gameStarted) return;
 
+        // CHECK WHAT DATA TYPES ARE RECEIVED
+        console.log("🛠 DataTransfer types on drop:", event.dataTransfer.types);
+
         let dataString = event.dataTransfer.getData("application/json");
         console.log("🔍 Raw drop data:", dataString);
 
         try {
             if (!dataString || dataString.trim() === "" || dataString.startsWith("http")) {  
-                throw new Error("Invalid drop data - Received an empty string or image URL instead of JSON.");
+                throw new Error("Invalid drop data - Received an image URL instead of JSON.");
             }
 
             let data = JSON.parse(dataString);
