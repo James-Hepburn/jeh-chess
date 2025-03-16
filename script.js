@@ -631,10 +631,7 @@ function resetGame() {
 
 async function fetchGameState() {
     let gameId = sessionStorage.getItem("gameId");
-    if (!gameId) {
-      generate_board();
-      return;
-    }
+    if (!gameId) return;
 
     let response = await fetch(`${API_URL}/join-game`, {
         method: "POST",
@@ -648,6 +645,7 @@ async function fetchGameState() {
     if (data.board) {
         board = data.board;
 
+        // Force update turn if it's different
         if (white_turn !== (data.turn === "white")) { 
             white_turn = data.turn === "white";
             console.log("✅ Turn updated from server:", white_turn);
