@@ -484,7 +484,7 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
   return !stillInCheck;
 }
 
-function make_draggable (piece, row, col) {
+async function make_draggable (piece, row, col) {
   await fetchGameState();
   
   let pieceType = board[row][col];
