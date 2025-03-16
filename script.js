@@ -147,6 +147,10 @@ function move_piece (old_row, old_col, row, col) {
     }
     white_turn = !white_turn;
     document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
+
+    await sendMove();
+    await fetchGameState();
+    
     setTimeout (generate_board, 50);
   }, 100);
 }
@@ -603,4 +607,4 @@ async function fetchGameState() {
     }
 }
 
-setInterval(fetchGameState, 5000);
+setInterval(fetchGameState, 2000);
