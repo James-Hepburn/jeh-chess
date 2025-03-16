@@ -39,6 +39,14 @@ var gameStarted = false;
 
 document.getElementById ("turn_indicator").style.display = "none";
 
+function preloadImages() {
+    Object.values(pieces).forEach((src) => {
+        const img = new Image();
+        img.src = src;
+    });
+}
+preloadImages();
+
 generate_board();
 disable_board();
 
@@ -129,6 +137,8 @@ async function move_piece (old_row, old_col, row, col) {
   save_board_state ();
 
   setTimeout (async () => {
+    generate_board();
+    
     if (is_in_checkmate ()) {
       alert ("Checkmate! " + (white_turn ? "Black" : "White") + " wins!");
       return;
@@ -473,6 +483,11 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
 }
 
 function make_draggable (piece, row, col) {
+  let pieceType = board[row][col];
+  if (!pieceType || (white_turn && pieceType[0] !== "w") || (!white_turn && pieceType[0] !== "b")) {
+      return; 
+  }
+  
   piece.draggable = true;
   
   piece.addEventListener ("dragstart", (event) => {
@@ -497,6 +512,11 @@ function make_droppable(square, row, col) {
         let old_row = data.row;
         let old_col = data.col;
         let piece = board[old_row][old_col];
+
+        if ((white_turn && piece[0] !== "w") || (!white_turn && piece[0] !== "b")) {
+            generate_board();
+            return;
+        }
 
         if (old_row === row && old_col === col) {
             generate_board();
@@ -580,6 +600,8 @@ async function sendMove() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "makeMove", gameId, board })
     });
+
+    await fetchGameState();
 }
 
 function resetGame() {
@@ -610,11 +632,11 @@ async function fetchGameState() {
     }
 }
 
+setInterval(fetchGameState, 2000);
+
 async function initializeGame() {
     generate_board();
     await fetchGameState();
 }
 
 initializeGame();
-
-
