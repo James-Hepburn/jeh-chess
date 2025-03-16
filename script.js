@@ -539,7 +539,7 @@ function make_droppable(square, row, col) {
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
 
 async function createGame() {
-  let response = await fetch(${API_URL}/create-game, {
+  let response = await fetch(`${API_URL}/create-game`, { 
     method: "POST",
     mode: "cors",
     headers: { "Content-Type": "application/json" },
@@ -549,7 +549,7 @@ async function createGame() {
   let data = await response.json();
   let gameId = data.gameId;
 
-  alert(Game Created! Share this Game ID: ${gameId});
+  alert(`Game Created! Share this Game ID: ${gameId}`);
   sessionStorage.setItem("gameId", gameId);
 
   startGame();
@@ -559,7 +559,7 @@ async function joinGame() {
   let gameId = prompt("Enter Game ID:");
   if (!gameId) return;
 
-  let response = await fetch(${API_URL}/join-game, {
+  let response = await fetch(`${API_URL}/join-game`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "joinGame", gameId })
@@ -595,7 +595,7 @@ async function sendMove() {
     let gameId = sessionStorage.getItem("gameId");
     if (!gameId) return;
 
-    await fetch(${API_URL}/make-move, {
+    await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "makeMove", gameId, board })
@@ -619,7 +619,7 @@ async function fetchGameState() {
       return;
     }
 
-    let response = await fetch(${API_URL}/join-game, {
+    let response = await fetch(`${API_URL}/join-game`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "joinGame", gameId })
