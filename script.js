@@ -611,3 +611,4 @@ async function fetchGameState() {
 }
 
 setInterval(fetchGameState, 2000);
+generate_board();
