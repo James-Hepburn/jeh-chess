@@ -607,7 +607,7 @@ async function sendMove() {
           action: "makeMove",
           gameId,
           board,
-          turn: white_turn ? "black" : "white"
+          turn: white_turn ? "white" : "black" 
       })
     });
 
