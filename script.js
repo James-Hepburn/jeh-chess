@@ -641,11 +641,10 @@ async function fetchGameState() {
   
     if (data.board) {
         board = data.board;
-        console.log("Fetched game state:", data);
-        console.log("Turn before update:", white_turn);
-        white_turn = data.turn === "white";
-        console.log("Turn after update:", white_turn);
-        console.log("White turn status:", white_turn);
+        if (white_turn !== (data.turn === "white")) { 
+            white_turn = data.turn === "white";
+            console.log("Turn updated from server:", white_turn);
+        }
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
     }
