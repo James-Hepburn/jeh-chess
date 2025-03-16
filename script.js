@@ -490,14 +490,34 @@ function make_draggable(piece, row, col) {
 
     piece.draggable = true;
 
-    piece.addEventListener ("dragstart", (event) => {
-    event.dataTransfer.setData ("text/plain", JSON.stringify({ row, col }));
-    selected_piece = {row, col};
-  });
+    piece.addEventListener("dragstart", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
 
-  piece.addEventListener ("dragend", () => {
-    selected_piece = null;
-  });
+        let dragData = JSON.stringify({ row, col });
+        console.log("✅ Drag started with data:", dragData);
+
+        event.dataTransfer.setData("application/json", dragData);
+        event.dataTransfer.effectAllowed = "move";
+
+        // Block unwanted drag types
+        event.dataTransfer.clearData("text/plain");
+        event.dataTransfer.clearData("text/uri-list");
+        event.dataTransfer.clearData("text/html");
+        event.dataTransfer.clearData("Files");
+
+        // Prevent default image dragging behavior
+        let ghostImage = document.createElement("div");
+        ghostImage.style.width = "1px";
+        ghostImage.style.height = "1px";
+        document.body.appendChild(ghostImage);
+        event.dataTransfer.setDragImage(ghostImage, 0, 0);
+        setTimeout(() => document.body.removeChild(ghostImage), 0);
+    });
+
+    piece.addEventListener("dragend", () => {
+        selected_piece = null;
+    });
 }
 
 function make_droppable(square, row, col) {
@@ -509,33 +529,52 @@ function make_droppable(square, row, col) {
 
     square.addEventListener("drop", (event) => {
         event.preventDefault();
-        var data = JSON.parse(event.dataTransfer.getData("text/plain"));
-        var old_row = data.row;
-        var old_col = data.col;
-        var piece = board[selected_piece.row][selected_piece.col];
-        let playerColor = sessionStorage.getItem("playerColor");
 
-        if (!piece || piece[0] !== playerColor) {
+        // Check what data was dropped
+        console.log("🛠 DataTransfer types on drop:", event.dataTransfer.types);
+
+        let dataString = event.dataTransfer.getData("application/json");
+
+        if (!dataString || dataString.trim() === "" || dataString.startsWith("http")) {
+            console.error("❌ Invalid data format: Expected JSON, but received something else.");
             generate_board();
             return;
         }
 
-        if (old_row === row && old_col === col) {
-            generate_board();
-            return;
-        }
+        try {
+            let data = JSON.parse(dataString);
+            console.log("✅ Drop received:", data);
 
-        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
-            generate_board();
-            return;
-        }
+            let old_row = data.row;
+            let old_col = data.col;
+            let piece = board[old_row][old_col];
+            let playerColor = sessionStorage.getItem("playerColor");
 
-        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
-            move_piece(old_row, old_col, row, col);
-        } else {
+            if (!piece || piece[0] !== playerColor) {
+                generate_board();
+                return;
+            }
+
+            if (old_row === row && old_col === col) {
+                generate_board();
+                return;
+            }
+
+            if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+                generate_board();
+                return;
+            }
+
+            if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+                move_piece(old_row, old_col, row, col);
+            } else {
+                generate_board();
+            }
+        } catch (error) {
+            console.error("❌ JSON Parsing Error:", error.message);
             generate_board();
         }
-    });  
+    });
 }
 
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
