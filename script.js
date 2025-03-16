@@ -491,26 +491,22 @@ function make_draggable(piece, row, col) {
     piece.draggable = true;
 
     piece.addEventListener("dragstart", (event) => {
-        event.preventDefault();  // Prevent default browser behavior
+        event.preventDefault();
         event.stopPropagation();
 
         let dragData = JSON.stringify({ row, col });
         console.log("✅ Drag started with data:", dragData);
 
         event.dataTransfer.setData("application/json", dragData);
-        event.dataTransfer.clearData("text/uri-list");  
-        event.dataTransfer.clearData("text/plain");  
-
         event.dataTransfer.effectAllowed = "move";
 
-        // BLOCK IMAGE DRAGGING
+        // Block unwanted formats
+        event.dataTransfer.clearData("text/plain");
+        event.dataTransfer.clearData("text/uri-list");
+
+        // Prevent default image dragging
         event.dataTransfer.setDragImage(new Image(), 0, 0);
     });
-
-    // **Explicitly prevent default drag on images**
-    piece.ondragstart = function(event) {
-        event.preventDefault();
-    };
 
     piece.addEventListener("dragend", () => {
         selected_piece = null;
@@ -530,12 +526,11 @@ function make_droppable(square, row, col) {
 
         console.log("🛠 DataTransfer types on drop:", event.dataTransfer.types);
 
-        let dataString = event.dataTransfer.getData("application/json");
-        console.log("🔍 Raw drop data:", dataString);
-
         try {
-            if (!dataString || dataString.trim() === "" || dataString.startsWith("http")) {  
-                throw new Error("❌ Invalid drop data - Received an image URL instead of JSON.");
+            let dataString = event.dataTransfer.getData("application/json");
+
+            if (!dataString || dataString.trim() === "" || !dataString.startsWith("{")) {  
+                throw new Error("Invalid drop data - Not valid JSON.");
             }
 
             let data = JSON.parse(dataString);
@@ -568,7 +563,7 @@ function make_droppable(square, row, col) {
             }
 
         } catch (error) {
-            console.error("❌ Invalid data format:", dataString, error.message);
+            console.error("❌ Invalid data format:", error.message);
             generate_board();
         }
     });
