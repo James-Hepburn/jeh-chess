@@ -493,12 +493,12 @@ function make_draggable(piece, row, col) {
     piece.draggable = true;
 
     piece.addEventListener("dragstart", (event) => {
-      let dragData = JSON.stringify({ row, col });
-      console.log("Drag started with data:", dragData);
-      
-      event.dataTransfer.setData("text/plain", dragData);  
-      event.dataTransfer.setData("text/uri-list", "");     
-      event.dataTransfer.effectAllowed = "move";
+        let dragData = JSON.stringify({ row, col });
+        console.log("Drag started with data:", dragData);
+
+        event.dataTransfer.setData("text/plain", dragData);  
+        event.dataTransfer.setData("text/uri-list", "");     
+        event.dataTransfer.effectAllowed = "move";
     });
 
     piece.addEventListener("dragend", () => {
@@ -510,8 +510,8 @@ function make_droppable(square, row, col) {
     if (!gameStarted) return;
 
     square.addEventListener("dragover", (event) => {
-      console.log("Dragging over square:", row, col);
-      event.preventDefault();
+        console.log("Dragging over square:", row, col);
+        event.preventDefault();
     });
 
     square.addEventListener("drop", (event) => {
@@ -519,44 +519,45 @@ function make_droppable(square, row, col) {
         if (!gameStarted) return;
 
         let dataString = event.dataTransfer.getData("text/plain");
-        let data;
-
-        console.log("Raw drop data:", dataString);
+        console.log("🔍 Raw drop data:", dataString);
 
         try {
-            if (!dataString) throw new Error("No data received!");
-            data = JSON.parse(dataString);
+            if (!dataString || dataString.startsWith("http")) {  
+                throw new Error("Invalid drop data - Received an image URL instead of JSON.");
+            }
+
+            let data = JSON.parse(dataString);
             console.log("Drop received:", data);
+
+            let old_row = data.row;
+            let old_col = data.col;
+            let piece = board[old_row][old_col];
+            let playerColor = sessionStorage.getItem("playerColor");
+
+            if (!piece || piece[0] !== playerColor) {
+                generate_board();
+                return;
+            }
+
+            if (old_row === row && old_col === col) {
+                generate_board();
+                return;
+            }
+
+            if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+                generate_board();
+                return;
+            }
+
+            if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+                move_piece(old_row, old_col, row, col);
+            } else {
+                generate_board();
+            }
+
         } catch (error) {
             console.error("Invalid data format:", dataString, error.message);
-            generate_board();
-            return;
-        }
-
-        let old_row = data.row;
-        let old_col = data.col;
-        let piece = board[old_row][old_col];
-        let playerColor = sessionStorage.getItem("playerColor");
-
-        if (!piece || piece[0] !== playerColor) {
-            generate_board();
-            return;
-        }
-
-        if (old_row === row && old_col === col) {
-            generate_board();
-            return;
-        }
-
-        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
-            generate_board();
-            return;
-        }
-
-        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
-            move_piece(old_row, old_col, row, col);
-        } else {
-            generate_board();
+            generate_board(); 
         }
     });
 }
