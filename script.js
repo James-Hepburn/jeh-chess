@@ -39,6 +39,7 @@ var gameStarted = false;
 
 document.getElementById ("turn_indicator").style.display = "none";
 
+generate_board();
 disable_board();
 
 function generate_board() {
