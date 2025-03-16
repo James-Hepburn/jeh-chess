@@ -157,14 +157,11 @@ async function move_piece (old_row, old_col, row, col) {
       alert ("Insufficient material! The game is a draw.");
       return;
     }
-    // white_turn = !white_turn;
-    // document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
+    white_turn = !white_turn;
+    document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
     await sendMove();
     await fetchGameState();
-
-    white_turn = !white_turn;
-    document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
     setTimeout (generate_board, 50);
   }, 100);
@@ -603,7 +600,7 @@ async function sendMove() {
     await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "makeMove", gameId, board })
+        body: JSON.stringify({ action: "makeMove", gameId, board, white_turn })
     });
 
     await fetchGameState();
