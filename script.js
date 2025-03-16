@@ -157,7 +157,7 @@ async function move_piece (old_row, old_col, row, col) {
       alert ("Insufficient material! The game is a draw.");
       return;
     }
-    // white_turn = !white_turn;
+    white_turn = !white_turn;
     // document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
     await sendMove();
