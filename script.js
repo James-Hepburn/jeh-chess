@@ -482,69 +482,75 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
   return !stillInCheck;
 }
 
-function make_draggable (piece, row, col) {
-  let pieceType = board[row][col];
-  let playerColor = sessionStorage.getItem("playerColor");
-  
-  if (!pieceType || pieceType[0] !== playerColor) {
-    return;
-  }
-  
-  piece.draggable = true;
-  
-  piece.addEventListener("dragstart", (event) => {
-    event.dataTransfer.setData("application/json", JSON.stringify({ row, col }));
-    selected_piece = { row, col };
-});
+function make_draggable(piece, row, col) {
+    let pieceType = board[row][col];
+    let playerColor = sessionStorage.getItem("playerColor");
 
-  piece.addEventListener ("dragend", () => {
-    selected_piece = null;
-  });
+    if (!pieceType || pieceType[0] !== playerColor) {
+        return;
+    }
+
+    piece.draggable = true;
+
+    piece.addEventListener("dragstart", (event) => {
+        let dragData = JSON.stringify({ row, col });
+        event.dataTransfer.setData("text/plain", dragData); 
+        console.log("Drag started:", dragData); 
+        selected_piece = { row, col };
+    });
+
+    piece.addEventListener("dragend", () => {
+        selected_piece = null;
+    });
 }
 
 function make_droppable(square, row, col) {
-    if (!gameStarted) return; 
+    if (!gameStarted) return;
+
     square.addEventListener("dragover", (event) => event.preventDefault());
 
     square.addEventListener("drop", (event) => {
-    event.preventDefault();
-    if (!gameStarted) return; 
+        event.preventDefault();
+        if (!gameStarted) return;
 
-    let data;
-    try {
-        data = JSON.parse(event.dataTransfer.getData("application/json"));
-    } catch (error) {
-        console.error("Invalid data format:", event.dataTransfer.getData("application/json"));
-        generate_board();
-        return;
-    }
+        let dataString = event.dataTransfer.getData("text/plain"); 
+        let data;
 
-    let old_row = data.row;
-    let old_col = data.col;
-    let piece = board[old_row][old_col];
-    let playerColor = sessionStorage.getItem("playerColor");
+        try {
+            data = JSON.parse(dataString);
+            console.log("Drop received:", data); 
+        } catch (error) {
+            console.error("Invalid data format:", dataString); 
+            generate_board();
+            return;
+        }
 
-    if (!piece || piece[0] !== playerColor) {
-        generate_board();
-        return;
-    }
+        let old_row = data.row;
+        let old_col = data.col;
+        let piece = board[old_row][old_col];
+        let playerColor = sessionStorage.getItem("playerColor");
 
-    if (old_row === row && old_col === col) {
-        generate_board();
-        return;
-    }
+        if (!piece || piece[0] !== playerColor) {
+            generate_board();
+            return;
+        }
 
-    if (board[row][col] !== null && board[row][col][0] === piece[0]) {
-        generate_board();
-        return;
-    }
+        if (old_row === row && old_col === col) {
+            generate_board();
+            return;
+        }
 
-    if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
-        move_piece(old_row, old_col, row, col);
-    } else {
-        generate_board();
-    }
-});
+        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+            generate_board();
+            return;
+        }
+
+        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+            move_piece(old_row, old_col, row, col);
+        } else {
+            generate_board();
+        }
+    });
 }
 
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
