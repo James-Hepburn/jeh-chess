@@ -162,7 +162,7 @@ async function move_piece (old_row, old_col, row, col) {
     document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
     await sendMove();
-    setTimeout(fetchGameState, 200);
+    setTimeout(fetchGameState, 500);
 
     setTimeout (generate_board, 50);
   }, 100);
@@ -603,7 +603,12 @@ async function sendMove() {
     await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "makeMove", gameId, board, turn: white_turn ? "white" : "black" })
+        body: JSON.stringify({
+          action: "makeMove",
+          gameId,
+          board,
+          turn: white_turn ? "black" : "white"
+      })
     });
 
     console.log("Move sent. Awaiting server response...");
@@ -636,7 +641,10 @@ async function fetchGameState() {
   
     if (data.board) {
         board = data.board;
+        console.log("Fetched game state:", data);
+        console.log("Turn before update:", white_turn);
         white_turn = data.turn === "white";
+        console.log("Turn after update:", white_turn);
         console.log("White turn status:", white_turn);
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
