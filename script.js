@@ -493,12 +493,11 @@ function make_draggable(piece, row, col) {
     piece.draggable = true;
 
     piece.addEventListener("dragstart", (event) => {
-        let dragData = JSON.stringify({ row, col });
-        console.log("Drag started with data:", dragData);
-        event.dataTransfer.setData("application/json", dragData);  
-        event.dataTransfer.effectAllowed = "move"; 
-        selected_piece = { row, col };
-    });
+      let dragData = JSON.stringify({ row, col });
+      console.log("🟢 Drag started with data:", dragData);
+      event.dataTransfer.setData("text/plain", dragData);
+      event.dataTransfer.effectAllowed = "move";
+  });
 
     piece.addEventListener("dragend", () => {
         selected_piece = null;
@@ -508,13 +507,16 @@ function make_draggable(piece, row, col) {
 function make_droppable(square, row, col) {
     if (!gameStarted) return;
 
-    square.addEventListener("dragover", (event) => event.preventDefault());
+    square.addEventListener("dragover", (event) => {
+      console.log("Dragging over square:", row, col);
+      event.preventDefault();
+    });
 
     square.addEventListener("drop", (event) => {
         event.preventDefault();
         if (!gameStarted) return;
 
-        let dataString = event.dataTransfer.getData("application/json");
+        let dataString = event.dataTransfer.getData("text/plain");
         let data;
 
         console.log("Raw drop data:", dataString);
