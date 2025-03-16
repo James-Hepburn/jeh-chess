@@ -486,20 +486,19 @@ function make_draggable(piece, row, col) {
     let pieceType = board[row][col];
     let playerColor = sessionStorage.getItem("playerColor");
 
-    if (!pieceType || pieceType[0] !== playerColor) {
-        return;
-    }
+    if (!pieceType || pieceType[0] !== playerColor) return;
 
     piece.draggable = true;
 
     piece.addEventListener("dragstart", (event) => {
+        event.stopPropagation(); 
+        event.preventDefault();  
+
         let dragData = JSON.stringify({ row, col });
         console.log("Drag started with data:", dragData);
 
         event.dataTransfer.setData("application/json", dragData);
-        event.dataTransfer.clearData("text/uri-list");  
-        event.dataTransfer.clearData("text/plain");  
-
+        event.dataTransfer.setData("text/plain", dragData); 
         event.dataTransfer.effectAllowed = "move";
     });
 
@@ -559,7 +558,7 @@ function make_droppable(square, row, col) {
 
         } catch (error) {
             console.error("Invalid data format:", dataString, error.message);
-            generate_board(); 
+            generate_board();
         }
     });
 }
