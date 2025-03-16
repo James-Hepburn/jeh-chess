@@ -598,7 +598,7 @@ async function sendMove() {
     await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "makeMove", gameId, board })
+        body: JSON.stringify({ action: "makeMove", gameId, board, white_turn })
     });
 
     await fetchGameState();
@@ -628,6 +628,8 @@ async function fetchGameState() {
     let data = await response.json();
     if (data.board) {
         board = data.board;
+        white_turn = data.white_turn;
+        document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
     }
 }
