@@ -492,10 +492,10 @@ function make_draggable (piece, row, col) {
   
   piece.draggable = true;
   
-  piece.addEventListener ("dragstart", (event) => {
-    event.dataTransfer.setData ("text/plain", JSON.stringify({ row, col }));
-    selected_piece = {row, col};
-  });
+  piece.addEventListener("dragstart", (event) => {
+    event.dataTransfer.setData("application/json", JSON.stringify({ row, col }));
+    selected_piece = { row, col };
+});
 
   piece.addEventListener ("dragend", () => {
     selected_piece = null;
@@ -507,36 +507,44 @@ function make_droppable(square, row, col) {
     square.addEventListener("dragover", (event) => event.preventDefault());
 
     square.addEventListener("drop", (event) => {
-        event.preventDefault();
-        if (!gameStarted) return; 
-        
-        let data = JSON.parse(event.dataTransfer.getData("text/plain"));
-        let old_row = data.row;
-        let old_col = data.col;
-        let piece = board[old_row][old_col];
-        let playerColor = sessionStorage.getItem("playerColor");
+    event.preventDefault();
+    if (!gameStarted) return; 
 
-        if (piece[0] !== playerColor) {
-            generate_board();
-            return;
-        }
+    let data;
+    try {
+        data = JSON.parse(event.dataTransfer.getData("application/json"));
+    } catch (error) {
+        console.error("Invalid data format:", event.dataTransfer.getData("application/json"));
+        generate_board();
+        return;
+    }
 
-        if (old_row === row && old_col === col) {
-            generate_board();
-            return;
-        }
+    let old_row = data.row;
+    let old_col = data.col;
+    let piece = board[old_row][old_col];
+    let playerColor = sessionStorage.getItem("playerColor");
 
-        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
-            generate_board();
-            return;
-        }
+    if (!piece || piece[0] !== playerColor) {
+        generate_board();
+        return;
+    }
 
-        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
-            move_piece(old_row, old_col, row, col);
-        } else {
-            generate_board();
-        }
-    });
+    if (old_row === row && old_col === col) {
+        generate_board();
+        return;
+    }
+
+    if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+        generate_board();
+        return;
+    }
+
+    if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+        move_piece(old_row, old_col, row, col);
+    } else {
+        generate_board();
+    }
+});
 }
 
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
