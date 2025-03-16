@@ -507,35 +507,35 @@ function make_droppable(square, row, col) {
         event.preventDefault();
     });
 
-    square.addEventListener ("drop", (event) => {
-      event.preventDefault ();
-      var data = JSON.parse (event.dataTransfer.getData ("text/plain"));
-      var old_row = data.row;
-      var old_col = data.col;
-      var piece = board [selected_piece.row][selected_piece.col];
-      let playerColor = sessionStorage.getItem("playerColor");
+    square.addEventListener("drop", (event) => {
+        event.preventDefault();
+        var data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        var old_row = data.row;
+        var old_col = data.col;
+        var piece = board[selected_piece.row][selected_piece.col];
+        let playerColor = sessionStorage.getItem("playerColor");
 
-      if (!piece || piece[0] !== playerColor) {
-          generate_board();
-          return;
-      }
-  
-      if (old_row === row && old_col === col) {
-        generate_board ();
-        return;
-      }
-  
-      if (board [row][col] !== null && board [row][col][0] === piece [0]) {
-        generate_board ();
-        return;
-      }
-  
-      if (is_valid_move_with_check_checking (old_row, old_col, row, col, piece)) {
-        move_piece (old_row, old_col, row, col);
-      } else {
-        generate_board ();
-      }
-    }
+        if (!piece || piece[0] !== playerColor) {
+            generate_board();
+            return;
+        }
+
+        if (old_row === row && old_col === col) {
+            generate_board();
+            return;
+        }
+
+        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+            generate_board();
+            return;
+        }
+
+        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+            move_piece(old_row, old_col, row, col);
+        } else {
+            generate_board();
+        }
+    });  
 }
 
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
