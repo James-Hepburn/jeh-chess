@@ -497,15 +497,20 @@ function make_draggable(piece, row, col) {
         let dragData = JSON.stringify({ row, col });
         console.log("✅ Drag started with data:", dragData);
 
+        // Only allow JSON data
         event.dataTransfer.setData("application/json", dragData);
         event.dataTransfer.effectAllowed = "move";
 
-        // Block unwanted formats
+        // **Forcibly Remove All Other Drag Data Types**
         event.dataTransfer.clearData("text/plain");
         event.dataTransfer.clearData("text/uri-list");
 
-        // Prevent default image dragging
+        // Prevent the default image dragging
         event.dataTransfer.setDragImage(new Image(), 0, 0);
+
+        setTimeout(() => {
+            console.log("🚀 DataTransfer types after setting:", event.dataTransfer.types);
+        }, 10);
     });
 
     piece.addEventListener("dragend", () => {
@@ -528,13 +533,18 @@ function make_droppable(square, row, col) {
 
         try {
             let dataString = event.dataTransfer.getData("application/json");
-
-            if (!dataString || dataString.trim() === "" || !dataString.startsWith("{")) {  
-                throw new Error("Invalid drop data - Not valid JSON.");
+            
+            // **Strict Data Validation**
+            if (!dataString || dataString.trim() === "" || dataString.includes("http") || !dataString.startsWith("{")) {  
+                throw new Error("Invalid drop data - Expected JSON, but received something else.");
             }
 
             let data = JSON.parse(dataString);
             console.log("✅ Drop received:", data);
+
+            if (!data || typeof data.row === "undefined" || typeof data.col === "undefined") {
+                throw new Error("Invalid JSON structure.");
+            }
 
             let old_row = data.row;
             let old_col = data.col;
@@ -564,6 +574,7 @@ function make_droppable(square, row, col) {
 
         } catch (error) {
             console.error("❌ Invalid data format:", error.message);
+            console.log("🔍 Raw drop data:", event.dataTransfer.getData("application/json"));
             generate_board();
         }
     });
