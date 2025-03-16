@@ -138,7 +138,7 @@ async function move_piece (old_row, old_col, row, col) {
 
   setTimeout (async () => {
     generate_board();
-    
+
     if (is_in_checkmate ()) {
       alert ("Checkmate! " + (white_turn ? "Black" : "White") + " wins!");
       return;
@@ -160,7 +160,7 @@ async function move_piece (old_row, old_col, row, col) {
 
     await sendMove();
     await fetchGameState();
-    
+
     setTimeout (generate_board, 50);
   }, 100);
 }
@@ -411,7 +411,7 @@ function find_king (color) {
       }
     }
   }
-  
+
   return {row: -1, col: -1};
 }
 
@@ -427,10 +427,10 @@ function is_valid_attack_move (old_row, old_col, row, col, piece) {
 
 function is_valid_pawn_attack (old_row, old_col, row, col) {
   var piece = board [old_row][old_col];
-  
+
   if (piece [0] === "w") return row === old_row - 1 && Math.abs (col - old_col) === 1; 
   if (piece [0] === "b") return row === old_row + 1 && Math.abs (col - old_col) === 1; 
-  
+
   return false;
 }
 
@@ -482,96 +482,55 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
   return !stillInCheck;
 }
 
-function make_draggable(piece, row, col) {
-    let pieceType = board[row][col];
-    let playerColor = sessionStorage.getItem("playerColor");
+function make_draggable (piece, row, col) {
+  let pieceType = board[row][col];
+  if (!pieceType || (white_turn && pieceType[0] !== "w") || (!white_turn && pieceType[0] !== "b")) {
+      return; 
+  }
 
-    if (!pieceType || pieceType[0] !== playerColor) return;
+  piece.draggable = true;
 
-    piece.draggable = true;
+  piece.addEventListener ("dragstart", (event) => {
+    event.dataTransfer.setData ("text/plain", JSON.stringify({ row, col }));
+    selected_piece = {row, col};
+  });
 
-    piece.addEventListener("dragstart", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        let dragData = JSON.stringify({ row, col });
-        console.log("✅ Drag started with data:", dragData);
-
-        event.dataTransfer.setData("application/json", dragData);
-        event.dataTransfer.effectAllowed = "move";
-
-        // Block unwanted drag types
-        event.dataTransfer.clearData("text/plain");
-        event.dataTransfer.clearData("text/uri-list");
-        event.dataTransfer.clearData("text/html");
-        event.dataTransfer.clearData("Files");
-
-        // Prevent default image dragging behavior
-        let ghostImage = document.createElement("div");
-        ghostImage.style.width = "1px";
-        ghostImage.style.height = "1px";
-        document.body.appendChild(ghostImage);
-        event.dataTransfer.setDragImage(ghostImage, 0, 0);
-        setTimeout(() => document.body.removeChild(ghostImage), 0);
-    });
-
-    piece.addEventListener("dragend", () => {
-        selected_piece = null;
-    });
+  piece.addEventListener ("dragend", () => {
+    selected_piece = null;
+  });
 }
 
 function make_droppable(square, row, col) {
-    if (!gameStarted) return;
-
-    square.addEventListener("dragover", (event) => {
-        event.preventDefault();
-    });
+    if (!gameStarted) return; 
+    square.addEventListener("dragover", (event) => event.preventDefault());
 
     square.addEventListener("drop", (event) => {
         event.preventDefault();
+        if (!gameStarted) return; 
 
-        // Check what data was dropped
-        console.log("🛠 DataTransfer types on drop:", event.dataTransfer.types);
+        let data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        let old_row = data.row;
+        let old_col = data.col;
+        let piece = board[old_row][old_col];
 
-        let dataString = event.dataTransfer.getData("application/json");
-
-        if (!dataString || dataString.trim() === "" || dataString.startsWith("http")) {
-            console.error("❌ Invalid data format: Expected JSON, but received something else.");
+        if ((white_turn && piece[0] !== "w") || (!white_turn && piece[0] !== "b")) {
             generate_board();
             return;
         }
 
-        try {
-            let data = JSON.parse(dataString);
-            console.log("✅ Drop received:", data);
+        if (old_row === row && old_col === col) {
+            generate_board();
+            return;
+        }
 
-            let old_row = data.row;
-            let old_col = data.col;
-            let piece = board[old_row][old_col];
-            let playerColor = sessionStorage.getItem("playerColor");
+        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+            generate_board();
+            return;
+        }
 
-            if (!piece || piece[0] !== playerColor) {
-                generate_board();
-                return;
-            }
-
-            if (old_row === row && old_col === col) {
-                generate_board();
-                return;
-            }
-
-            if (board[row][col] !== null && board[row][col][0] === piece[0]) {
-                generate_board();
-                return;
-            }
-
-            if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
-                move_piece(old_row, old_col, row, col);
-            } else {
-                generate_board();
-            }
-        } catch (error) {
-            console.error("❌ JSON Parsing Error:", error.message);
+        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+            move_piece(old_row, old_col, row, col);
+        } else {
             generate_board();
         }
     });
@@ -580,7 +539,7 @@ function make_droppable(square, row, col) {
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
 
 async function createGame() {
-  let response = await fetch(`${API_URL}/create-game`, {
+  let response = await fetch(${API_URL}/create-game, {
     method: "POST",
     mode: "cors",
     headers: { "Content-Type": "application/json" },
@@ -590,9 +549,9 @@ async function createGame() {
   let data = await response.json();
   let gameId = data.gameId;
 
-  alert(`Game Created! Share this Game ID: ${gameId}`);
+  alert(Game Created! Share this Game ID: ${gameId});
   sessionStorage.setItem("gameId", gameId);
-  
+
   startGame();
 }
 
@@ -600,7 +559,7 @@ async function joinGame() {
   let gameId = prompt("Enter Game ID:");
   if (!gameId) return;
 
-  let response = await fetch(`${API_URL}/join-game`, {
+  let response = await fetch(${API_URL}/join-game, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "joinGame", gameId })
@@ -611,7 +570,6 @@ async function joinGame() {
     alert("Invalid Game ID!");
   } else {
     sessionStorage.setItem("gameId", gameId);
-    sessionStorage.setItem("playerColor", data.playerColor);
     board = data.board;
     startGame();
   }
@@ -637,7 +595,7 @@ async function sendMove() {
     let gameId = sessionStorage.getItem("gameId");
     if (!gameId) return;
 
-    await fetch(`${API_URL}/make-move`, {
+    await fetch(${API_URL}/make-move, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "makeMove", gameId, board })
@@ -661,7 +619,7 @@ async function fetchGameState() {
       return;
     }
 
-    let response = await fetch(`${API_URL}/join-game`, {
+    let response = await fetch(${API_URL}/join-game, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "joinGame", gameId })
