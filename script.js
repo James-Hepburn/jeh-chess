@@ -92,6 +92,8 @@ function is_threefold_repetition () {
 }
 
 async function move_piece (old_row, old_col, row, col) {
+  await fetchGameState();
+  
   var piece = board [old_row][old_col];
   var captured_piece = board [row][col];
 
@@ -483,6 +485,8 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
 }
 
 function make_draggable (piece, row, col) {
+  await fetchGameState();
+  
   let pieceType = board[row][col];
   if (!pieceType || (white_turn && pieceType[0] !== "w") || (!white_turn && pieceType[0] !== "b")) {
       return; 
@@ -628,6 +632,8 @@ async function fetchGameState() {
     let data = await response.json();
     if (data.board) {
         board = data.board;
+        white_turn = data.white_turn;  
+        document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
     }
 }
