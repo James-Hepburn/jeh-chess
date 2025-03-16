@@ -598,21 +598,27 @@ async function sendMove() {
     let gameId = sessionStorage.getItem("gameId");
     if (!gameId) return;
 
-    console.log("Sending move. Current turn:", white_turn);
+    console.log("📤 Sending move. Current turn:", white_turn);
 
-    await fetch(`${API_URL}/make-move`, {
+    let response = await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "makeMove",
           gameId,
           board,
-          turn: white_turn ? "white" : "black" 
+          turn: white_turn ? "white" : "black"  
       })
     });
 
-    console.log("Move sent. Awaiting server response...");
-    setTimeout(fetchGameState, 200);
+    let data = await response.json();
+    console.log("✅ Server response:", data);
+
+    console.log("⏳ Delaying game state fetch...");
+    setTimeout(() => {
+        console.log("🔄 Fetching updated game state...");
+        fetchGameState();
+    }, 1000); 
 }
 
 function resetGame() {
@@ -637,14 +643,18 @@ async function fetchGameState() {
     });
 
     let data = await response.json();
-    console.log("Fetched game state:", data);
-  
+    console.log("🔄 Fetched game state:", data);
+
     if (data.board) {
         board = data.board;
+
         if (white_turn !== (data.turn === "white")) { 
             white_turn = data.turn === "white";
-            console.log("Turn updated from server:", white_turn);
+            console.log("✅ Turn updated from server:", white_turn);
+        } else {
+            console.log("❌ Turn DID NOT change from server. Avoiding overwrite.");
         }
+
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
     }
