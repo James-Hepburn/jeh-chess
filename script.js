@@ -484,8 +484,10 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
 
 function make_draggable (piece, row, col) {
   let pieceType = board[row][col];
-  if (!pieceType || (white_turn && pieceType[0] !== "w") || (!white_turn && pieceType[0] !== "b")) {
-      return; 
+  let playerColor = sessionStorage.getItem("playerColor");
+  
+  if (!pieceType || pieceType[0] !== playerColor) {
+    return;
   }
   
   piece.draggable = true;
@@ -512,8 +514,9 @@ function make_droppable(square, row, col) {
         let old_row = data.row;
         let old_col = data.col;
         let piece = board[old_row][old_col];
+        let playerColor = sessionStorage.getItem("playerColor");
 
-        if ((white_turn && piece[0] !== "w") || (!white_turn && piece[0] !== "b")) {
+        if (piece[0] !== playerColor) {
             generate_board();
             return;
         }
@@ -570,6 +573,7 @@ async function joinGame() {
     alert("Invalid Game ID!");
   } else {
     sessionStorage.setItem("gameId", gameId);
+    sessionStorage.setItem("playerColor", data.playerColor);
     board = data.board;
     startGame();
   }
