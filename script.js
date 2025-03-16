@@ -493,11 +493,11 @@ function make_draggable(piece, row, col) {
     piece.draggable = true;
 
     piece.addEventListener("dragstart", (event) => {
-        let dragData = JSON.stringify({ row: row, col: col });
+        let dragData = JSON.stringify({ row, col });
+        console.log("Drag started with data:", dragData);
         event.dataTransfer.setData("application/json", dragData);  
-        event.dataTransfer.effectAllowed = "move";
-        console.log("Drag started:", dragData);
-        selected_piece = { row, col }; 
+        event.dataTransfer.effectAllowed = "move"; 
+        selected_piece = { row, col };
     });
 
     piece.addEventListener("dragend", () => {
@@ -517,11 +517,14 @@ function make_droppable(square, row, col) {
         let dataString = event.dataTransfer.getData("application/json");
         let data;
 
+        console.log("Raw drop data:", dataString);
+
         try {
+            if (!dataString) throw new Error("No data received!");
             data = JSON.parse(dataString);
             console.log("Drop received:", data);
         } catch (error) {
-            console.error("Invalid data format:", dataString);
+            console.error("Invalid data format:", dataString, error.message);
             generate_board();
             return;
         }
