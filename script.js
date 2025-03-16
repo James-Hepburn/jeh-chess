@@ -35,43 +35,39 @@ var white_turn = true;
 var white_king_moved = false;
 var black_king_moved = false;
 var halfmove_clock = 0;
+var gameStarted = false;
 
-generate_board ();
+document.getElementById ("turn_indicator").style.display = "none";
 
-function generate_board () {
-  var chess_board = document.getElementById ("chess_board");
+disable_board();
+
+function generate_board() {
+  var chess_board = document.getElementById("chess_board");
   chess_board.innerHTML = "";
-
-  var king_pos = find_king (white_turn ? "w" : "b");
-  var in_check = is_in_check ();
-  var in_checkmate = is_in_checkmate ();
 
   for (var i = 0; i < 8; i++) {
     for (var j = 0; j < 8; j++) {
-      var square = document.createElement ("div");
-      square.classList.add ("square");
-      square.classList.add ((i + j) % 2 === 0 ? "light" : "dark");
+      var square = document.createElement("div");
+      square.classList.add("square", (i + j) % 2 === 0 ? "light" : "dark");
       square.dataset.row = i;
       square.dataset.col = j;
 
-      if (in_check && i === king_pos.row && j === king_pos.col) {
-        square.classList.add ("check-highlight");
+      if (board[i][j] != null) {
+        var img = document.createElement("img");
+        img.src = pieces[board[i][j]];
+        img.classList.add("piece");
+
+        if (gameStarted) {
+          make_draggable(img, i, j);
+        }
+        square.appendChild(img);
       }
 
-      if (in_checkmate && i === king_pos.row && j === king_pos.col) {
-        square.classList.add ("checkmate-highlight");
+      if (gameStarted) {
+        make_droppable(square, i, j);
       }
 
-      if (board [i][j] != null) {
-        var img = document.createElement ("img");
-        img.src = pieces [board [i][j]];
-        img.classList.add ("piece");
-        make_draggable (img, i, j);
-        square.appendChild (img);
-      }
-
-      make_droppable (square, i, j);
-      chess_board.append (square);
+      chess_board.append(square);
     }
   }
 }
@@ -484,70 +480,89 @@ function make_draggable (piece, row, col) {
   });
 }
 
-function make_droppable (square, row, col) {
-  square.addEventListener ("dragover", (event) => {
-    event.preventDefault ();
-  });
+function make_droppable(square, row, col) {
+    if (!gameStarted) return; 
+    square.addEventListener("dragover", (event) => event.preventDefault());
 
-  square.addEventListener ("drop", (event) => {
-    event.preventDefault ();
-    var data = JSON.parse (event.dataTransfer.getData ("text/plain"));
-    var old_row = data.row;
-    var old_col = data.col;
-    var piece = board [selected_piece.row][selected_piece.col];
+    square.addEventListener("drop", (event) => {
+        event.preventDefault();
+        if (!gameStarted) return; 
+        
+        let data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        let old_row = data.row;
+        let old_col = data.col;
+        let piece = board[old_row][old_col];
 
-    if (old_row === row && old_col === col) {
-      generate_board ();
-      return;
-    }
+        if (old_row === row && old_col === col) {
+            generate_board();
+            return;
+        }
 
-    if (board [row][col] !== null && board [row][col][0] === piece [0]) {
-      generate_board ();
-      return;
-    }
+        if (board[row][col] !== null && board[row][col][0] === piece[0]) {
+            generate_board();
+            return;
+        }
 
-    if (is_valid_move_with_check_checking (old_row, old_col, row, col, piece)) {
-      move_piece (old_row, old_col, row, col);
-    } else {
-      generate_board ();
-    }
-  });
+        if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
+            move_piece(old_row, old_col, row, col);
+        } else {
+            generate_board();
+        }
+    });
 }
 
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
 
 async function createGame() {
-    let response = await fetch(`${API_URL}/create-game`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "createGame" })
-    });
+  let response = await fetch(`${API_URL}/create-game`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "createGame" })
+  });
 
-    let data = await response.json();
-    let gameId = data.gameId;
+  let data = await response.json();
+  let gameId = data.gameId;
 
-    alert(`Game Created! Share this Game ID: ${gameId}`);
-    sessionStorage.setItem("gameId", gameId);
+  alert(`Game Created! Share this Game ID: ${gameId}`);
+  sessionStorage.setItem("gameId", gameId);
+  
+  startGame();
 }
 
 async function joinGame() {
-    let gameId = prompt("Enter Game ID:");
-    if (!gameId) return;
+  let gameId = prompt("Enter Game ID:");
+  if (!gameId) return;
 
-    let response = await fetch(`${API_URL}/join-game`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "joinGame", gameId })
-    });
+  let response = await fetch(`${API_URL}/join-game`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "joinGame", gameId })
+  });
 
-    let data = await response.json();
-    if (data.message === "Game not found") {
-        alert("Invalid Game ID!");
-    } else {
-        sessionStorage.setItem("gameId", gameId);
-        board = data.board;
-        generate_board();
-    }
+  let data = await response.json();
+  if (data.message === "Game not found") {
+    alert("Invalid Game ID!");
+  } else {
+    sessionStorage.setItem("gameId", gameId);
+    board = data.board;
+    startGame();
+  }
+}
+
+function startGame() {
+    gameStarted = true;
+    enable_board();
+    document.getElementById("turn_indicator").style.display = "block";
+    document.getElementById("button_container").style.display = "none";
+    generate_board();
+}
+
+function disable_board() {
+  document.querySelectorAll(".piece").forEach(piece => piece.draggable = false);
+}
+
+function enable_board() {
+  document.querySelectorAll(".piece").forEach(piece => piece.draggable = true);
 }
 
 async function sendMove() {
@@ -559,6 +574,14 @@ async function sendMove() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "makeMove", gameId, board })
     });
+}
+
+function resetGame() {
+    gameStarted = false;
+    document.getElementById("turn_indicator").style.display = "none";
+    document.getElementById("button_container").style.display = "block";
+    disable_board();
+    generate_board();
 }
 
 async function fetchGameState() {
