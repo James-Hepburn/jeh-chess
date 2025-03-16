@@ -490,32 +490,14 @@ function make_draggable(piece, row, col) {
 
     piece.draggable = true;
 
-    piece.addEventListener("dragstart", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+    piece.addEventListener ("dragstart", (event) => {
+    event.dataTransfer.setData ("text/plain", JSON.stringify({ row, col }));
+    selected_piece = {row, col};
+  });
 
-        let dragData = JSON.stringify({ row, col });
-        console.log("✅ Drag started with data:", dragData);
-
-        // Only allow JSON data
-        event.dataTransfer.setData("application/json", dragData);
-        event.dataTransfer.effectAllowed = "move";
-
-        // **Forcibly Remove All Other Drag Data Types**
-        event.dataTransfer.clearData("text/plain");
-        event.dataTransfer.clearData("text/uri-list");
-
-        // Prevent the default image dragging
-        event.dataTransfer.setDragImage(new Image(), 0, 0);
-
-        setTimeout(() => {
-            console.log("🚀 DataTransfer types after setting:", event.dataTransfer.types);
-        }, 10);
-    });
-
-    piece.addEventListener("dragend", () => {
-        selected_piece = null;
-    });
+  piece.addEventListener ("dragend", () => {
+    selected_piece = null;
+  });
 }
 
 function make_droppable(square, row, col) {
@@ -525,59 +507,35 @@ function make_droppable(square, row, col) {
         event.preventDefault();
     });
 
-    square.addEventListener("drop", (event) => {
-        event.preventDefault();
-        if (!gameStarted) return;
+    square.addEventListener ("drop", (event) => {
+      event.preventDefault ();
+      var data = JSON.parse (event.dataTransfer.getData ("text/plain"));
+      var old_row = data.row;
+      var old_col = data.col;
+      var piece = board [selected_piece.row][selected_piece.col];
+      let playerColor = sessionStorage.getItem("playerColor");
 
-        console.log("🛠 DataTransfer types on drop:", event.dataTransfer.types);
-
-        try {
-            let dataString = event.dataTransfer.getData("application/json");
-            
-            // **Strict Data Validation**
-            if (!dataString || dataString.trim() === "" || dataString.includes("http") || !dataString.startsWith("{")) {  
-                throw new Error("Invalid drop data - Expected JSON, but received something else.");
-            }
-
-            let data = JSON.parse(dataString);
-            console.log("✅ Drop received:", data);
-
-            if (!data || typeof data.row === "undefined" || typeof data.col === "undefined") {
-                throw new Error("Invalid JSON structure.");
-            }
-
-            let old_row = data.row;
-            let old_col = data.col;
-            let piece = board[old_row][old_col];
-            let playerColor = sessionStorage.getItem("playerColor");
-
-            if (!piece || piece[0] !== playerColor) {
-                generate_board();
-                return;
-            }
-
-            if (old_row === row && old_col === col) {
-                generate_board();
-                return;
-            }
-
-            if (board[row][col] !== null && board[row][col][0] === piece[0]) {
-                generate_board();
-                return;
-            }
-
-            if (is_valid_move_with_check_checking(old_row, old_col, row, col, piece)) {
-                move_piece(old_row, old_col, row, col);
-            } else {
-                generate_board();
-            }
-
-        } catch (error) {
-            console.error("❌ Invalid data format:", error.message);
-            console.log("🔍 Raw drop data:", event.dataTransfer.getData("application/json"));
-            generate_board();
-        }
-    });
+      if (!piece || piece[0] !== playerColor) {
+          generate_board();
+          return;
+      }
+  
+      if (old_row === row && old_col === col) {
+        generate_board ();
+        return;
+      }
+  
+      if (board [row][col] !== null && board [row][col][0] === piece [0]) {
+        generate_board ();
+        return;
+      }
+  
+      if (is_valid_move_with_check_checking (old_row, old_col, row, col, piece)) {
+        move_piece (old_row, old_col, row, col);
+      } else {
+        generate_board ();
+      }
+    }
 }
 
 const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
