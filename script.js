@@ -517,6 +517,7 @@ const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod";
 async function createGame() {
   let response = await fetch(`${API_URL}/create-game`, {
     method: "POST",
+    mode: "cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "createGame" })
   });
