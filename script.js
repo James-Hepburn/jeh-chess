@@ -489,9 +489,9 @@ function make_draggable(piece, row, col) {
     if (!pieceType || pieceType[0] !== playerColor) return;
 
     piece.draggable = true;
-    
+
     piece.addEventListener("dragstart", (event) => {
-        event.preventDefault();  // Prevent default image dragging behavior
+        event.preventDefault();  // Prevent default browser behavior
         event.stopPropagation();
 
         let dragData = JSON.stringify({ row, col });
@@ -499,18 +499,18 @@ function make_draggable(piece, row, col) {
 
         event.dataTransfer.setData("application/json", dragData);
         event.dataTransfer.clearData("text/uri-list");  
-        event.dataTransfer.clearData("text/plain"); 
-
-        // FORCE JSON ONLY
-        setTimeout(() => {
-            console.log("🚀 DataTransfer types after setting:", event.dataTransfer.types);
-        }, 0);
+        event.dataTransfer.clearData("text/plain");  
 
         event.dataTransfer.effectAllowed = "move";
 
         // BLOCK IMAGE DRAGGING
         event.dataTransfer.setDragImage(new Image(), 0, 0);
     });
+
+    // **Explicitly prevent default drag on images**
+    piece.ondragstart = function(event) {
+        event.preventDefault();
+    };
 
     piece.addEventListener("dragend", () => {
         selected_piece = null;
@@ -528,7 +528,6 @@ function make_droppable(square, row, col) {
         event.preventDefault();
         if (!gameStarted) return;
 
-        // CHECK WHAT DATA TYPES ARE RECEIVED
         console.log("🛠 DataTransfer types on drop:", event.dataTransfer.types);
 
         let dataString = event.dataTransfer.getData("application/json");
@@ -536,7 +535,7 @@ function make_droppable(square, row, col) {
 
         try {
             if (!dataString || dataString.trim() === "" || dataString.startsWith("http")) {  
-                throw new Error("Invalid drop data - Received an image URL instead of JSON.");
+                throw new Error("❌ Invalid drop data - Received an image URL instead of JSON.");
             }
 
             let data = JSON.parse(dataString);
