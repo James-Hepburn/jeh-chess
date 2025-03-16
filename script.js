@@ -92,46 +92,77 @@ function is_threefold_repetition () {
 }
 
 async function move_piece (old_row, old_col, row, col) {
-    var piece = board[old_row][old_col];
+  var piece = board [old_row][old_col];
+  var captured_piece = board [row][col];
 
-    board[row][col] = piece;
-    board[old_row][old_col] = null;
-    last_move = {piece, old_row, old_col, row, col};
+  if (piece === "wk" && old_row === 7 && old_col === 4) {
+    if (col === 6 && board [7][7] === "wr") {
+      board [7][5] = "wr";
+      board [7][7] = null;
+    } else if (col === 2 && board [7][0] === "wr") { 
+      board [7][3] = "wr";
+      board [7][0] = null;
+    }
+  }
 
-    save_board_state();
+  if (piece === "bk" && old_row === 0 && old_col === 4) {
+    if (col === 6 && board [0][7] === "br") { 
+      board [0][5] = "br";
+      board [0][7] = null;
+    } else if (col === 2 && board [0][0] === "br") { 
+      board [0][3] = "br";
+      board [0][0] = null;
+    }
+  }
 
-    setTimeout(async () => {
-        generate_board();
+  if (piece.includes ("p") && (row === 0 || row === 7)) {
+    promote_pawn (row, col, piece[0]);
+  }
 
-        if (is_in_checkmate()) {
-            alert("Checkmate! " + (white_turn ? "Black" : "White") + " wins!");
-            return;
-        } else if (is_stalemate()) {
-            alert("Stalemate! The game is a draw.");
-            return;
-        } else if (is_threefold_repetition()) {
-            alert("Threefold repetition! The game is a draw.");
-            return;
-        } else if (halfmove_clock >= 100) {
-            alert("50-move rule! The game is a draw.");
-            return;
-        } else if (is_insufficient_material()) {
-            alert("Insufficient material! The game is a draw.");
-            return;
-        }
+  if (piece.includes ("p") && last_move && last_move.piece.includes ("p") && last_move.row === old_row && last_move.old_row === old_row + (piece[0] === "w" ? -2 : 2) && last_move.col === col) {
+    board [old_row][col] = null;
+  }
 
-        white_turn = !white_turn;
-        
-        let playerColor = sessionStorage.getItem("playerColor");
-        if ((white_turn && playerColor === "w") || (!white_turn && playerColor === "b")) {
-            document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
-        } else {
-            document.getElementById("turn_indicator").innerText = "Waiting for opponent...";
-        }
+  board [row][col] = piece;
+  board [old_row][old_col] = null;
+  last_move = {piece, old_row, old_col, row, col};
 
-        await sendMove();
-        await fetchGameState();
-    }, 100);
+  if (piece === "wk") white_king_moved = true;
+  if (piece === "bk") black_king_moved = true;
+  if (piece === "wr" && old_row === 7 && old_col === 0) white_rook_moved.left = true;
+  if (piece === "wr" && old_row === 7 && old_col === 7) white_rook_moved.right = true;
+  if (piece === "br" && old_row === 0 && old_col === 0) black_rook_moved.left = true;
+  if (piece === "br" && old_row === 0 && old_col === 7) black_rook_moved.right = true;
+
+  save_board_state ();
+
+  setTimeout (async () => {
+    generate_board();
+
+    if (is_in_checkmate ()) {
+      alert ("Checkmate! " + (white_turn ? "Black" : "White") + " wins!");
+      return;
+    } else if (is_stalemate ()) {
+      alert ("Stalemate! The game is a draw.");
+      return;
+    } else if (is_threefold_repetition ()) {
+      alert ("Threefold repetition! The game is a draw.");
+      return;
+    } else if (halfmove_clock >= 100) {
+      alert ("50-move rule! The game is a draw.");
+      return;
+    } else if (is_insufficient_material ()) {
+      alert ("Insufficient material! The game is a draw.");
+      return;
+    }
+    white_turn = !white_turn;
+    document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
+
+    await sendMove();
+    await fetchGameState();
+
+    setTimeout (generate_board, 50);
+  }, 100);
 }
 
 function promote_pawn (row, col, color) {
@@ -453,14 +484,8 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
 
 function make_draggable (piece, row, col) {
   let pieceType = board[row][col];
-  let playerColor = sessionStorage.getItem("playerColor");
-  
-  if (!pieceType || (playerColor !== pieceType[0])) {
-    return; 
-  }
-
-  if ((white_turn && playerColor !== "w") || (!white_turn && playerColor !== "b")) {
-    return; 
+  if (!pieceType || (white_turn && pieceType[0] !== "w") || (!white_turn && pieceType[0] !== "b")) {
+      return; 
   }
 
   piece.draggable = true;
@@ -487,9 +512,8 @@ function make_droppable(square, row, col) {
         let old_row = data.row;
         let old_col = data.col;
         let piece = board[old_row][old_col];
-        let playerColor = sessionStorage.getItem("playerColor");
 
-        if ((white_turn && playerColor !== "w") || (!white_turn && playerColor !== "b")) {
+        if ((white_turn && piece[0] !== "w") || (!white_turn && piece[0] !== "b")) {
             generate_board();
             return;
         }
@@ -546,7 +570,6 @@ async function joinGame() {
     alert("Invalid Game ID!");
   } else {
     sessionStorage.setItem("gameId", gameId);
-    sessionStorage.setItem("playerColor", data.color);
     board = data.board;
     startGame();
   }
@@ -575,7 +598,7 @@ async function sendMove() {
     await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "makeMove", gameId, board, white_turn })
+        body: JSON.stringify({ action: "makeMove", gameId, board })
     });
 
     await fetchGameState();
@@ -605,8 +628,6 @@ async function fetchGameState() {
     let data = await response.json();
     if (data.board) {
         board = data.board;
-        white_turn = data.white_turn;
-        document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
     }
 }
