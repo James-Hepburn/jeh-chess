@@ -592,7 +592,10 @@ function resetGame() {
 
 async function fetchGameState() {
     let gameId = sessionStorage.getItem("gameId");
-    if (!gameId) return;
+    if (!gameId) {
+      generate_board();
+      return;
+    }
 
     let response = await fetch(`${API_URL}/join-game`, {
         method: "POST",
