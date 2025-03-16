@@ -494,10 +494,12 @@ function make_draggable(piece, row, col) {
 
     piece.addEventListener("dragstart", (event) => {
       let dragData = JSON.stringify({ row, col });
-      console.log("🟢 Drag started with data:", dragData);
-      event.dataTransfer.setData("text/plain", dragData);
+      console.log("Drag started with data:", dragData);
+      
+      event.dataTransfer.setData("text/plain", dragData);  
+      event.dataTransfer.setData("text/uri-list", "");     
       event.dataTransfer.effectAllowed = "move";
-  });
+    });
 
     piece.addEventListener("dragend", () => {
         selected_piece = null;
