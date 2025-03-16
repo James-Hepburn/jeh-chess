@@ -496,8 +496,10 @@ function make_draggable(piece, row, col) {
         let dragData = JSON.stringify({ row, col });
         console.log("Drag started with data:", dragData);
 
-        event.dataTransfer.setData("text/plain", dragData);  
-        event.dataTransfer.setData("text/uri-list", "");     
+        event.dataTransfer.setData("application/json", dragData);
+        event.dataTransfer.clearData("text/uri-list");  
+        event.dataTransfer.clearData("text/plain");  
+
         event.dataTransfer.effectAllowed = "move";
     });
 
@@ -518,7 +520,7 @@ function make_droppable(square, row, col) {
         event.preventDefault();
         if (!gameStarted) return;
 
-        let dataString = event.dataTransfer.getData("text/plain");
+        let dataString = event.dataTransfer.getData("application/json");
         console.log("🔍 Raw drop data:", dataString);
 
         try {
