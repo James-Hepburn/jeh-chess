@@ -593,7 +593,20 @@ async function joinGame() {
 
 function startGame() {
     gameStarted = true;
-    enable_board();
+
+    let playerColor = sessionStorage.getItem("playerColor");
+    if (!playerColor) {
+        console.error("⛔ playerColor is undefined! Cannot start game.");
+        return;
+    }
+
+    // ✅ Only enable board for the current player
+    if ((white_turn && playerColor === "white") || (!white_turn && playerColor === "black")) {
+        enable_board();
+    } else {
+        disable_board();
+    }
+
     document.getElementById("turn_indicator").style.display = "block";
     document.getElementById("button_container").style.display = "none";
     generate_board();
@@ -646,8 +659,8 @@ async function sendMove() {
     console.log("⏳ Delaying game state fetch...");
     setTimeout(async () => {
         console.log("🔄 Fetching updated game state...");
-        await fetchGameState();
-        generate_board(); // Force board update
+        await fetchGameState();  // ✅ Always fetch state immediately
+        generate_board();        // ✅ Force update board
     }, 1000);
 }
 
@@ -684,8 +697,16 @@ async function fetchGameState() {
 
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
-        // ✅ Always refresh board after fetching state
+        // ✅ Force update board state
         generate_board();
+
+        // ✅ Check if it's the player's turn and enable/disable board accordingly
+        let playerColor = sessionStorage.getItem("playerColor");
+        if ((white_turn && playerColor === "white") || (!white_turn && playerColor === "black")) {
+            enable_board();
+        } else {
+            disable_board();
+        }
     }
 
     fetchingState = false;
