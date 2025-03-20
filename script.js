@@ -584,6 +584,10 @@ async function joinGame() {
     sessionStorage.setItem("playerColor", playerColor);
 
     startGame();
+
+    // ✅ Force update board state for joining player
+    await fetchGameState();
+    generate_board();
   }
 }
 
@@ -612,10 +616,16 @@ async function sendMove() {
 
     await fetchGameState(); // Ensure we have the latest game state
 
+    if (!playerColor) {
+        console.error("⛔ playerColor is undefined! Cannot send move.");
+        return;
+    }
+    
     if ((white_turn && playerColor !== "white") || (!white_turn && playerColor !== "black")) {
-        console.log("⛔ Not your turn! Move blocked.");
+        console.log(`⛔ Not your turn! PlayerColor: ${playerColor}, Current Turn: ${white_turn ? "White" : "Black"}`);
         return; 
     }
+
 
     console.log("📤 Sending move. Current turn:", white_turn);
     
@@ -634,10 +644,11 @@ async function sendMove() {
     console.log("✅ Server response:", data);
 
     console.log("⏳ Delaying game state fetch...");
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log("🔄 Fetching updated game state...");
-        fetchGameState();
-    }, 1000); 
+        await fetchGameState();
+        generate_board(); // Force board update
+    }, 1000);
 }
 
 function resetGame() {
@@ -680,7 +691,10 @@ async function fetchGameState() {
     fetchingState = false;
 }
 
-setInterval(fetchGameState, 2000);
+setInterval(async () => {
+    console.log("🔄 Auto-fetching game state...");
+    await fetchGameState();
+}, 2000);
 
 async function initializeGame() {
     generate_board();
