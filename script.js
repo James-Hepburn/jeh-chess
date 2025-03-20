@@ -697,16 +697,18 @@ async function fetchGameState() {
 
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
-        // ✅ Force update board state
+        // ✅ Force a full refresh for the board (IMPORTANT)
         generate_board();
 
-        // ✅ Check if it's the player's turn and enable/disable board accordingly
+        // ✅ Ensure only the correct player can move
         let playerColor = sessionStorage.getItem("playerColor");
         if ((white_turn && playerColor === "white") || (!white_turn && playerColor === "black")) {
             enable_board();
         } else {
             disable_board();
         }
+    } else {
+        console.log("⚠️ No board data received from server.");
     }
 
     fetchingState = false;
