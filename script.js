@@ -555,6 +555,10 @@ async function createGame() {
   alert(`Game Created! Share this Game ID: ${gameId}`);
   sessionStorage.setItem("gameId", gameId);
 
+  // ✅ Assign playerColor
+  playerColor = "white"; // Creator is always White
+  sessionStorage.setItem("playerColor", playerColor);
+
   startGame();
 }
 
@@ -574,6 +578,11 @@ async function joinGame() {
   } else {
     sessionStorage.setItem("gameId", gameId);
     board = data.board;
+
+    // ✅ Assign playerColor
+    playerColor = "black"; // Joining player is always Black
+    sessionStorage.setItem("playerColor", playerColor);
+
     startGame();
   }
 }
@@ -598,10 +607,12 @@ async function sendMove() {
     let gameId = sessionStorage.getItem("gameId");
     if (!gameId) return;
 
-    // Force fetch latest game state first
-    await fetchGameState();
+    // ✅ Get playerColor from sessionStorage
+    let playerColor = sessionStorage.getItem("playerColor");
 
-    if (white_turn !== (playerColor === "white")) {
+    await fetchGameState(); // Ensure we have the latest game state
+
+    if ((white_turn && playerColor !== "white") || (!white_turn && playerColor !== "black")) {
         console.log("⛔ Not your turn! Move blocked.");
         return; 
     }
@@ -661,6 +672,8 @@ async function fetchGameState() {
         console.log("✅ Turn updated from server:", white_turn);
 
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
+
+        // ✅ Always refresh board after fetching state
         generate_board();
     }
 
