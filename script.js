@@ -646,11 +646,11 @@ async function fetchGameState() {
         board = data.board;
 
         // Force update turn if it's different
-        if (white_turn !== (data.turn === "white")) { 
-            white_turn = data.turn === "white";
+        if (data.turn) { 
+            white_turn = data.turn === "white";  // Always set it
             console.log("✅ Turn updated from server:", white_turn);
         } else {
-            console.log("❌ Turn DID NOT change from server. Avoiding overwrite.");
+            console.log("⚠️ No turn info received from server.");
         }
 
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
