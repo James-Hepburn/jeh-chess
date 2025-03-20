@@ -637,7 +637,12 @@ function resetGame() {
     generate_board();
 }
 
+let fetchingState = false;
+
 async function fetchGameState() {
+    if (fetchingState) return;  // Prevent multiple overlapping fetches
+    fetchingState = true;
+
     let gameId = sessionStorage.getItem("gameId");
     if (!gameId) return;
 
@@ -652,18 +657,14 @@ async function fetchGameState() {
 
     if (data.board) {
         board = data.board;
-
-        // Force update turn if it's different
-        if (data.turn) { 
-            white_turn = data.turn === "white";  // Always set it
-            console.log("✅ Turn updated from server:", white_turn);
-        } else {
-            console.log("⚠️ No turn info received from server.");
-        }
+        white_turn = data.turn === "white"; // Always update
+        console.log("✅ Turn updated from server:", white_turn);
 
         document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
         generate_board();
     }
+
+    fetchingState = false;
 }
 
 setInterval(fetchGameState, 2000);
