@@ -598,17 +598,25 @@ async function sendMove() {
     let gameId = sessionStorage.getItem("gameId");
     if (!gameId) return;
 
-    console.log("📤 Sending move. Current turn:", white_turn);
+    // Force fetch latest game state first
+    await fetchGameState();
 
+    if (white_turn !== (playerColor === "white")) {
+        console.log("⛔ Not your turn! Move blocked.");
+        return; 
+    }
+
+    console.log("📤 Sending move. Current turn:", white_turn);
+    
     let response = await fetch(`${API_URL}/make-move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "makeMove",
-          gameId,
-          board,
-          turn: white_turn ? "white" : "black"  
-      })
+            action: "makeMove",
+            gameId,
+            board,
+            turn: white_turn ? "white" : "black"
+        })
     });
 
     let data = await response.json();
