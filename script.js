@@ -594,8 +594,10 @@ function connectToWebSocket() {
   socket.onopen = () => {
     console.log("WebSocket connected");
     gameStarted = true;
+
     document.getElementById("turn_indicator").style.display = "block";
     document.getElementById("button_container").style.display = "none";
+
     generate_board();
   };
 
@@ -608,8 +610,11 @@ function connectToWebSocket() {
 
   socket.onclose = () => {
     console.log("WebSocket disconnected");
-    alert("Disconnected from game.");
-    resetGame();
+
+    if (gameStarted) {
+      alert("Disconnected from game.");
+      resetGame();
+    }
   };
 }
 
