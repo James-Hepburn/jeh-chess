@@ -488,8 +488,16 @@ function is_valid_move_with_check_checking (old_row, old_col, row, col, piece) {
 
 function make_draggable (piece, row, col) {
   let pieceType = board[row][col];
-  if (!pieceType || (white_turn && pieceType[0] !== "w") || (!white_turn && pieceType[0] !== "b")) {
-      return; 
+  if (!pieceType) return;
+  
+  if ((playerColor === "white" && pieceType[0] !== "w") ||
+      (playerColor === "black" && pieceType[0] !== "b")) {
+      return;
+  }
+  
+  if ((playerColor === "white" && !white_turn) ||
+      (playerColor === "black" && white_turn)) {
+      return;
   }
 
   piece.draggable = true;
