@@ -96,8 +96,6 @@ function is_threefold_repetition () {
 }
 
 async function move_piece (old_row, old_col, row, col) {
-  await fetchGameState();
-  
   var piece = board [old_row][old_col];
   var captured_piece = board [row][col];
 
@@ -166,7 +164,6 @@ async function move_piece (old_row, old_col, row, col) {
     document.getElementById ("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
 
     await sendMove();
-    setTimeout(fetchGameState, 500);
 
     setTimeout (generate_board, 50);
   }, 100);
