@@ -1,3 +1,7 @@
+let socket;
+let gameId = null;
+let playerColor = null;
+
 var board = [
   ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"], 
   ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
@@ -539,12 +543,74 @@ function make_droppable(square, row, col) {
     });
 }
 
-async function createGame() {
+async function sendMove() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    const message = {
+      action: "sendMessage",
+      gameId: gameId,
+      move: last_move
+    };
+    socket.send(JSON.stringify(message));
+  }
+}
 
+function applyOpponentMove(move) {
+  const { piece, old_row, old_col, row, col } = move;
+  board[old_row][old_col] = null;
+  board[row][col] = piece;
+  white_turn = !white_turn;
+  generate_board();
+  document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
+}
+
+function createGame() {
+  gameId = generateGameId();
+  playerColor = "white";
+  alert(`Your game code is: ${gameId}`);
+  connectToWebSocket();
+}
+
+function generateGameId(length = 6) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 }
 
 async function joinGame() {
+  gameId = prompt("Enter game code to join:");
+  playerColor = "black";
+  connectToWebSocket();
+}
 
+function connectToWebSocket() {
+  if (!gameId || !playerColor) return;
+
+  const socketUrl = `wss://6zhrupeonj.execute-api.us-east-1.amazonaws.com/production?gameId=${gameId}&color=${playerColor}`;
+  socket = new WebSocket(socketUrl);
+
+  socket.onopen = () => {
+    console.log("WebSocket connected");
+    gameStarted = true;
+    document.getElementById("turn_indicator").style.display = "block";
+    document.getElementById("button_container").style.display = "none";
+    generate_board();
+  };
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.action === "move" && data.move) {
+      applyOpponentMove(data.move);
+    }
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket disconnected");
+    alert("Disconnected from game.");
+    resetGame();
+  };
 }
 
 function disable_board() {
