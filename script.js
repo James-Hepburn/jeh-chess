@@ -539,77 +539,12 @@ function make_droppable(square, row, col) {
     });
 }
 
-const API_URL = "https://zbwjw2pdz0.execute-api.us-east-1.amazonaws.com/prod"; 
-
 async function createGame() {
-  let response = await fetch(`${API_URL}/create-game`, { 
-    method: "POST",
-    mode: "cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "createGame" })
-  });
 
-  let data = await response.json();
-  let gameId = data.gameId;
-
-  alert(`Game Created! Share this Game ID: ${gameId}`);
-  sessionStorage.setItem("gameId", gameId);
-
-  // ✅ Assign playerColor
-  playerColor = "white"; // Creator is always White
-  sessionStorage.setItem("playerColor", playerColor);
-
-  startGame();
 }
 
 async function joinGame() {
-  let gameId = prompt("Enter Game ID:");
-  if (!gameId) return;
 
-  let response = await fetch(`${API_URL}/join-game`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "joinGame", gameId })
-  });
-
-  let data = await response.json();
-  if (data.message === "Game not found") {
-    alert("Invalid Game ID!");
-  } else {
-    sessionStorage.setItem("gameId", gameId);
-    board = data.board;
-
-    // ✅ Assign playerColor
-    playerColor = "black"; // Joining player is always Black
-    sessionStorage.setItem("playerColor", playerColor);
-
-    startGame();
-
-    // ✅ Force update board state for joining player
-    await fetchGameState();
-    generate_board();
-  }
-}
-
-function startGame() {
-    gameStarted = true;
-
-    let playerColor = sessionStorage.getItem("playerColor");
-    if (!playerColor) {
-        console.error("⛔ playerColor is undefined! Cannot start game.");
-        return;
-    }
-
-    // ✅ Only enable board for the current player
-    if ((white_turn && playerColor === "white") || (!white_turn && playerColor === "black")) {
-        enable_board();
-    } else {
-        disable_board();
-    }
-
-    document.getElementById("turn_indicator").style.display = "block";
-    document.getElementById("button_container").style.display = "none";
-    generate_board();
 }
 
 function disable_board() {
@@ -620,50 +555,6 @@ function enable_board() {
   document.querySelectorAll(".piece").forEach(piece => piece.draggable = true);
 }
 
-async function sendMove() {
-    let gameId = sessionStorage.getItem("gameId");
-    if (!gameId) return;
-
-    // ✅ Get playerColor from sessionStorage
-    let playerColor = sessionStorage.getItem("playerColor");
-
-    await fetchGameState(); // Ensure we have the latest game state
-
-    if (!playerColor) {
-        console.error("⛔ playerColor is undefined! Cannot send move.");
-        return;
-    }
-    
-    if ((white_turn && playerColor !== "white") || (!white_turn && playerColor !== "black")) {
-        console.log(`⛔ Not your turn! PlayerColor: ${playerColor}, Current Turn: ${white_turn ? "White" : "Black"}`);
-        return; 
-    }
-
-
-    console.log("📤 Sending move. Current turn:", white_turn);
-    
-    let response = await fetch(`${API_URL}/make-move`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            action: "makeMove",
-            gameId,
-            board,
-            turn: white_turn ? "white" : "black"
-        })
-    });
-
-    let data = await response.json();
-    console.log("✅ Server response:", data);
-
-    console.log("⏳ Delaying game state fetch...");
-    setTimeout(async () => {
-        console.log("🔄 Fetching updated game state...");
-        await fetchGameState();  // ✅ Always fetch state immediately
-        generate_board();        // ✅ Force update board
-    }, 1000);
-}
-
 function resetGame() {
     gameStarted = false;
     document.getElementById("turn_indicator").style.display = "none";
@@ -671,57 +562,3 @@ function resetGame() {
     disable_board();
     generate_board();
 }
-
-let fetchingState = false;
-
-async function fetchGameState() {
-    if (fetchingState) return;  // Prevent multiple overlapping fetches
-    fetchingState = true;
-
-    let gameId = sessionStorage.getItem("gameId");
-    if (!gameId) return;
-
-    let response = await fetch(`${API_URL}/join-game`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "joinGame", gameId })
-    });
-
-    let data = await response.json();
-    console.log("🔄 Fetched game state:", data);
-
-    if (data.board) {
-        board = data.board;
-        white_turn = data.turn === "white"; // Always update
-        console.log("✅ Turn updated from server:", white_turn);
-
-        document.getElementById("turn_indicator").innerText = white_turn ? "White's Turn" : "Black's Turn";
-
-        // ✅ Force a full refresh for the board (IMPORTANT)
-        generate_board();
-
-        // ✅ Ensure only the correct player can move
-        let playerColor = sessionStorage.getItem("playerColor");
-        if ((white_turn && playerColor === "white") || (!white_turn && playerColor === "black")) {
-            enable_board();
-        } else {
-            disable_board();
-        }
-    } else {
-        console.log("⚠️ No board data received from server.");
-    }
-
-    fetchingState = false;
-}
-
-setInterval(async () => {
-    console.log("🔄 Auto-fetching game state...");
-    await fetchGameState();
-}, 2000);
-
-async function initializeGame() {
-    generate_board();
-    await fetchGameState();
-}
-
-initializeGame();
